@@ -357,12 +357,10 @@ export default function MetasPage() {
                                         <td className="p-3 text-gray-600">{formatDate(meta.data)}</td>
                                         <td className="p-3 font-semibold text-gray-900">{formatValue(meta.meta)}</td>
                                         <td className="p-3 text-sm text-gray-500">
-                                            <td className="p-3 text-sm text-gray-500">
-                                                {meta.responsavel_nome && <div className="font-medium text-gray-900">{meta.responsavel_nome}</div>}
-                                                {meta.sigla && <div className="text-xs text-gray-400">Sigla: {meta.sigla}</div>}
-                                                {meta.detalhes?.Meta_Tomadores > 0 && ` | Tom: ${meta.detalhes.Meta_Tomadores}`}
-                                                {meta.detalhes?.meta_cte > 0 && ` | CTe: ${meta.detalhes.meta_cte}`}
-                                            </td>
+                                            {meta.responsavel_nome && <div className="font-medium text-gray-900">{meta.responsavel_nome}</div>}
+                                            {meta.sigla && <div className="text-xs text-gray-400">Sigla: {meta.sigla}</div>}
+                                            {meta.detalhes?.Meta_Tomadores > 0 && ` | Tom: ${meta.detalhes.Meta_Tomadores}`}
+                                            {meta.detalhes?.meta_cte > 0 && ` | CTe: ${meta.detalhes.meta_cte}`}
                                         </td>
                                         <td className="p-3 text-right">
                                             <Button variant="ghost" size="sm" onClick={() => handleDelete(meta.id, meta.tipo)} className="text-red-600">
