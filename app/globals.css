@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Branding Variables - Dynamic per company */
+  --brand-primary: #7C3AED;
+  --brand-secondary: #EC4899;
+  --brand-login-bg: #1F2937;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 96%;
+    --foreground: 280 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 280 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 280 10% 10%;
+    --primary: 285 85% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 285 30% 85%;
+    --secondary-foreground: 280 10% 10%;
+    --muted: 285 20% 92%;
+    --muted-foreground: 280 10% 45%;
+    --accent: 285 30% 85%;
+    --accent-foreground: 280 10% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 285 20% 88%;
+    --input: 285 20% 88%;
+    --ring: 285 85% 55%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 280 20% 8%;
+    --foreground: 0 0% 98%;
+    --card: 280 15% 12%;
+    --card-foreground: 0 0% 98%;
+    --popover: 280 15% 12%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 285 85% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 280 15% 20%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 280 15% 20%;
+    --muted-foreground: 280 10% 65%;
+    --accent: 280 15% 20%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 280 15% 20%;
+    --input: 280 15% 20%;
+    --ring: 285 85% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

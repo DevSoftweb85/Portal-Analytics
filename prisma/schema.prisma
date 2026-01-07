@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model clientes {
+  cliid    Int      @id @default(autoincrement())
+  clisigla String?  @db.VarChar(3)
+  clidb    String?  @db.VarChar(50)
+  cliNome  String?  @db.VarChar(100)
+  clilogo  String?  @db.VarChar(255)
+  clivalor Decimal? @db.Decimal(10, 2)
+
+  @@map("clientes")
+}
+
+model cotadores {
+  id       Int     @id @default(autoincrement())
+  codigo   String? @db.VarChar(10)
+  cotador  String? @db.VarChar(50)
+  nome     String? @db.VarChar(100)
+  status   String? @db.VarChar(50)
+  unidade  String? @db.VarChar(10)
+  equipe   String? @db.VarChar(10)
+  clientes String? @db.VarChar(100)
+  clisigla String? @db.VarChar(20)
+
+  @@map("cotadores")
+}
+
+model filiais {
+  id          Int      @id @default(autoincrement())
+  data        DateTime @db.Date
+  filial      String   @db.VarChar(10)
+  nome_filial String   @db.VarChar(100)
+  valor       Decimal  @db.Decimal(10, 2)
+  clisigla    String?  @db.VarChar(20)
+
+  @@map("filiais")
+}
+
+model meta_faturamento {
+  id       BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  filial   String?   @db.VarChar(100)
+  sigla    String?   @db.VarChar(10)
+  data     DateTime? @db.Date
+  valor    Decimal?  @db.Decimal(15, 2)
+  clisigla String?   @db.VarChar(20)
+
+  @@map("meta_faturamento")
+}
+
+model metas_cotadores {
+  id           Int       @id @default(autoincrement())
+  mes          String    @db.VarChar(20)
+  cotador      Int       @default(0)
+  cotador_dash Int       @default(0)
+  meta         Decimal   @default(0.00) @db.Decimal(10, 2)
+  dominio      String    @db.VarChar(10)
+  created_at   DateTime? @default(now()) @db.Timestamp(0)
+
+  @@map("metas_cotadores")
+}
+
+model metas_unidade {
+  id         Int      @id @default(autoincrement())
+  unidade_id Int
+  meta       Decimal  @db.Decimal(10, 2)
+  data_meta  DateTime @db.Date
+  unidades   unidades @relation(fields: [unidade_id], references: [id], onUpdate: Restrict, map: "metas_unidade_ibfk_1")
+
+  @@index([unidade_id], map: "unidade_id")
+  @@map("metas_unidade")
+}
+
+model metas_vendedores {
+  id              Int       @id @default(autoincrement())
+  vendedor_id     Int?
+  meta            Decimal?  @db.Decimal(10, 2)
+  data            DateTime? @db.Date
+  status          String?   @db.VarChar(20)
+  clisigla        String?   @db.VarChar(20)
+  Meta_Tomadores  Int
+  meta_vlr_medio  Decimal   @db.Decimal(12, 2)
+  meta_frequencia Int
+  meta_cte        Int
+
+  @@map("metas_vendedores")
+}
+
+model sec_users {
+  login           String   @id @db.VarChar(50)
+  pswd            String   @db.VarChar(255)
+  name            String   @db.VarChar(100)
+  active          Boolean? @default(true)
+  activation_code String?  @db.VarChar(100)
+  priv_admin      Boolean? @default(false)
+  cpf             String?  @db.VarChar(14)
+  telefone        String?  @db.VarChar(20)
+  clisigla        String?  @db.VarChar(20)
+
+  @@map("sec_users")
+}
+
+model unidades {
+  id            Int             @id @default(autoincrement())
+  sigla         String          @db.VarChar(10)
+  nome          String          @db.VarChar(100)
+  clisigla      String?         @db.VarChar(20)
+  metas_unidade metas_unidade[]
+
+  @@map("unidades")
+}
+
+model vendedores {
+  id       Int     @id @default(autoincrement())
+  codigo   String? @db.VarChar(10)
+  vendedor String? @db.VarChar(50)
+  nome     String? @db.VarChar(100)
+  status   String? @db.VarChar(50)
+  unidade  String? @db.VarChar(10)
+  equipe   String? @db.VarChar(10)
+  clientes String? @db.VarChar(100)
+  clisigla String? @db.VarChar(20)
+
+  @@map("vendedores")
+}
