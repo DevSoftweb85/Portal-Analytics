@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Target, Plus, Trash2, TrendingUp } from "lucide-react"
+import { Target, Plus, Trash2, TrendingUp, ArrowUpDown } from "lucide-react"
 
 interface Meta {
     id: string
@@ -29,6 +29,7 @@ export default function MetasPage() {
     const [unidades, setUnidades] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState("Todos")
+    const [sortBy, setSortBy] = useState<"data" | "valor">("data")
     const [showForm, setShowForm] = useState(false)
     const [formData, setFormData] = useState({
         tipo: "Vendedor",
@@ -38,7 +39,8 @@ export default function MetasPage() {
         sigla: "",
         unidade_id: "",
         meta: "",
-        data: new Date().toISOString().slice(0, 10),
+        mes: new Date().toISOString().slice(0, 7), // YYYY-MM format
+        qtdMeses: "1",
         Meta_Tomadores: "",
         meta_vlr_medio: "",
         meta_frequencia: "",
@@ -99,39 +101,50 @@ export default function MetasPage() {
 
     const handleAdd = async () => {
         try {
-            const payload: any = {
-                tipo: formData.tipo,
-                meta: parseFloat(formData.meta) || 0,
-                data: formData.data,
+            const qtdMeses = parseInt(formData.qtdMeses) || 1
+            const [year, month] = formData.mes.split('-').map(Number)
+
+            const requests = []
+            for (let i = 0; i < qtdMeses; i++) {
+                // Calcular mês/ano para cada iteração
+                const targetDate = new Date(Date.UTC(year, month - 1 + i, 1))
+                const dataStr = targetDate.toISOString().slice(0, 10) // YYYY-MM-01
+
+                const payload: any = {
+                    tipo: formData.tipo,
+                    meta: parseFloat(formData.meta) || 0,
+                    data: dataStr,
+                }
+
+                if (formData.tipo === "Vendedor") {
+                    payload.vendedor_id = parseInt(formData.vendedor_id)
+                    payload.Meta_Tomadores = parseInt(formData.Meta_Tomadores) || 0
+                    payload.meta_vlr_medio = parseFloat(formData.meta_vlr_medio) || 0
+                    payload.meta_frequencia = parseInt(formData.meta_frequencia) || 0
+                    payload.meta_cte = parseInt(formData.meta_cte) || 0
+                } else if (formData.tipo === "Cotador") {
+                    payload.cotador = parseInt(formData.cotador)
+                } else if (formData.tipo === "Faturamento") {
+                    payload.filial = formData.filial
+                    payload.sigla = formData.sigla
+                    payload.valor = parseFloat(formData.meta) || 0
+                } else if (formData.tipo === "Unidade") {
+                    payload.unidade_id = parseInt(formData.unidade_id)
+                }
+
+                requests.push(
+                    fetch("/api/metas", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                )
             }
 
-            if (formData.tipo === "Vendedor") {
-                payload.vendedor_id = parseInt(formData.vendedor_id)
-                payload.Meta_Tomadores = parseInt(formData.Meta_Tomadores) || 0
-                payload.meta_vlr_medio = parseFloat(formData.meta_vlr_medio) || 0
-                payload.meta_frequencia = parseInt(formData.meta_frequencia) || 0
-                payload.meta_cte = parseInt(formData.meta_cte) || 0
-            } else if (formData.tipo === "Cotador") {
-                payload.cotador = parseInt(formData.cotador)
-            } else if (formData.tipo === "Faturamento") {
-                payload.filial = formData.filial
-                payload.sigla = formData.sigla
-                payload.valor = parseFloat(formData.meta) || 0
-            } else if (formData.tipo === "Unidade") {
-                payload.unidade_id = parseInt(formData.unidade_id)
-            }
-
-            const res = await fetch("/api/metas", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-
-            if (res.ok) {
-                loadMetas()
-                setShowForm(false)
-                resetForm()
-            }
+            await Promise.all(requests)
+            loadMetas()
+            setShowForm(false)
+            resetForm()
         } catch (error) {
             console.error("Error adding meta:", error)
         }
@@ -146,7 +159,8 @@ export default function MetasPage() {
             sigla: "",
             unidade_id: "",
             meta: "",
-            data: new Date().toISOString().slice(0, 10),
+            mes: new Date().toISOString().slice(0, 7),
+            qtdMeses: "1",
             Meta_Tomadores: "",
             meta_vlr_medio: "",
             meta_frequencia: "",
@@ -176,7 +190,18 @@ export default function MetasPage() {
         }
     }
 
-    const filteredMetas = filter === "Todos" ? metas : metas.filter(m => m.tipo === filter)
+    const filteredMetas = (filter === "Todos" ? metas : metas.filter(m => m.tipo === filter))
+        .sort((a, b) => {
+            if (sortBy === "data") {
+                const dateA = a.data ? new Date(a.data).getTime() : 0
+                const dateB = b.data ? new Date(b.data).getTime() : 0
+                return dateB - dateA // Mais recente primeiro
+            } else {
+                const valorA = parseFloat(a.meta?.toString() || "0")
+                const valorB = parseFloat(b.meta?.toString() || "0")
+                return valorB - valorA // Maior valor primeiro
+            }
+        })
 
     const formatValue = (value: any) => {
         if (!value) return "R$ 0,00"
@@ -186,7 +211,12 @@ export default function MetasPage() {
 
     const formatDate = (date: Date | null) => {
         if (!date) return "-"
-        return new Date(date).toLocaleDateString('pt-BR')
+        // Forçar interpretação como UTC para evitar mudança de dia devido ao fuso horário
+        const d = new Date(date)
+        const dia = d.getUTCDate().toString().padStart(2, '0')
+        const mes = (d.getUTCMonth() + 1).toString().padStart(2, '0')
+        const ano = d.getUTCFullYear()
+        return `${dia}/${mes}/${ano}`
     }
 
     if (loading) {
@@ -302,7 +332,8 @@ export default function MetasPage() {
                             )}
 
                             <Input placeholder="Valor (R$)" type="number" value={formData.meta} onChange={(e) => setFormData({ ...formData, meta: e.target.value })} />
-                            <Input type="date" value={formData.data} onChange={(e) => setFormData({ ...formData, data: e.target.value })} />
+                            <Input type="month" value={formData.mes} onChange={(e) => setFormData({ ...formData, mes: e.target.value })} />
+                            <Input placeholder="Qtd Meses" type="number" min="1" max="12" value={formData.qtdMeses} onChange={(e) => setFormData({ ...formData, qtdMeses: e.target.value })} />
                         </div>
 
                         {formData.tipo === "Vendedor" && (
@@ -324,11 +355,23 @@ export default function MetasPage() {
 
             {/* Tabela de Metas */}
             <Card className="border-0 shadow-lg">
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                         <TrendingUp className="h-5 w-5" />
                         Metas Cadastradas ({filteredMetas.length})
                     </CardTitle>
+                    <div className="flex items-center gap-2">
+                        <ArrowUpDown className="h-4 w-4 text-gray-500" />
+                        <Select value={sortBy} onValueChange={(v: "data" | "valor") => setSortBy(v)}>
+                            <SelectTrigger className="w-[140px]">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="data">Por Data</SelectItem>
+                                <SelectItem value="valor">Por Valor</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
